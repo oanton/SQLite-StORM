@@ -82,6 +82,7 @@ extension SQLiteStORM {
 		var clauseSelectList = "*"
 		var clauseWhere = ""
 		var clauseOrder = ""
+        var clauseJoins = ""
 
 		if columns.count > 0 {
 			clauseSelectList = columns.joined(separator: ",")
@@ -103,9 +104,14 @@ extension SQLiteStORM {
 		if orderby.count > 0 {
 			clauseOrder = " ORDER BY \(orderby.joined(separator: ", "))"
 		}
+        if joins.count > 0 {
+            for join in joins {
+                clauseJoins += " \(join.direction) JOIN \(join.table) ON \(join.onCondition) "
+            }
+        }
 		do {
-			//print("EXEC: SELECT \(clauseCount) FROM \(table()) \(clauseWhere)")
-			let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseWhere)", params: paramsString)
+			//print("EXEC: SELECT \(clauseCount) FROM \(table()) \(clauseJoins) \(clauseWhere)")
+			let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseJoins) \(clauseWhere)", params: paramsString)
 			let numrecords = getCount.first?.data["counter"]! as? Int ?? 0
 			results.cursorData = StORMCursor(
 				limit: cursor.limit,
@@ -114,10 +120,11 @@ extension SQLiteStORM {
 
 
 			// SELECT ASSEMBLE
-			var str = "SELECT \(clauseSelectList) FROM \(table()) \(clauseWhere) \(clauseOrder)"
+			var str = "SELECT \(clauseSelectList) FROM \(table()) \(clauseJoins) \(clauseWhere) \(clauseOrder)"
 
 
-			// TODO: Add joins, having, groupby
+            // TODO: joins implemented, need to test
+			// TODO: Add having, groupby
 
 			if cursor.limit > 0 {
 				str += " LIMIT \(cursor.limit)"

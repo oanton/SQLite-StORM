@@ -105,5 +105,27 @@ extension SQLiteStORM {
 		}
 		
 	}
+    
+    /// Performs a find on mathing column name/value pairs.
+    public func find(_ data: [String: Any], orderby: [String], join: [StORMDataSourceJoin], groupBy: [String]) throws {
+        let (idname, _) = firstAsKey()
+        let cursor = StORMCursor()
+        var paramsString = [String]()
+        var set = [String]()
+        var counter = 0
+        for i in data.keys {
+            paramsString.append(data[i] as! String)
+            set.append("\(i) = :\(counter+1)")
+            counter += 1
+        }
+        
+        do {
+            try select(whereclause: set.joined(separator: " AND "), params: paramsString, orderby: orderby.count > 0 ? orderby : [idname], cursor: cursor, joins: join, having: [], groupBy: groupBy)
+        } catch {
+            LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
+            self.error = StORMError.error("\(error)")
+            throw error
+        }
+    }
 
 }
